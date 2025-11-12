@@ -14,7 +14,7 @@ uint32_t timer = 0;
 float acc_roll = 0, acc_pitch = 0;
 float gyro_roll = 0, gyro_pitch = 0, gyro_yaw = 0;
 static float alpha = 0.98f;
-double dt = 0;
+double dt = 1/200;
 
 void Calculate_Euler_Angles(MPU6050_t *mpu6050, uint32_t tick) {
 	if (timer == 0) {

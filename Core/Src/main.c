@@ -55,6 +55,10 @@ UART_HandleTypeDef huart3;
 /* USER CODE BEGIN PV */
 bool is_calibartion_finished = false;
 volatile uint8_t mpu_data_ready = 0;
+uint16_t samples = 2000;
+MPU6050_t mpu6050 = {0};
+INT_ENABLE_t enabled_interrputs = {0};
+INT_CONFIG_t interrupt_config = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,10 +73,7 @@ static void MX_USART3_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-MPU6050_t mpu6050 = {0};
-INT_ENABLE_t enabled_interrputs = {0};
-INT_CONFIG_t interrupt_config = {0};
-extern double dt;
+
 /* USER CODE END 0 */
 
 /**
@@ -113,9 +114,8 @@ int main(void)
   MX_I2C1_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-	if (MPU6050_Init(&mpu6050, &hi2c1, MPU6050_ADDR_AD0_LOW, &enabled_interrputs, &interrupt_config) == HAL_OK){
+	if (MPU6050_Init(&mpu6050, &hi2c1, MPU6050_ADDR_AD0_LOW, &enabled_interrputs, &interrupt_config, &mpu_data_ready) == HAL_OK) {
 		printf("MPU6050 successfully initialize\n");
-		is_calibartion_finished = true;
 	} else {
 		printf("MPU6050 couldn't initialize\n");
 	}
@@ -351,7 +351,7 @@ int _write(int file, char *ptr, int len){
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	if (GPIO_Pin == GPIO_PIN_7 && is_calibartion_finished) {
+	if (GPIO_Pin == GPIO_PIN_7) {
 		mpu_data_ready = 1;
 	}
 }

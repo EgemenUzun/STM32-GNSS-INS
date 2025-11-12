@@ -137,7 +137,7 @@ typedef struct {
  * @param address I2C address of MPU6050 (MPU6050_ADDR_AD0_LOW or MPU6050_ADDR_AD0_HIGH)
  * @return HAL status (HAL_OK if successful)
  */
-HAL_StatusTypeDef MPU6050_Init(MPU6050_t *mpu, I2C_HandleTypeDef *hi2c, uint8_t address, INT_ENABLE_t *interrupts, INT_CONFIG_t *interrupt_config);
+HAL_StatusTypeDef MPU6050_Init(MPU6050_t *mpu, I2C_HandleTypeDef *hi2c, uint8_t address, INT_ENABLE_t *interrupts, INT_CONFIG_t *interrupt_config, volatile uint8_t *is_ready);
 
 /**
  * @brief Set gyroscope range
@@ -222,7 +222,7 @@ HAL_StatusTypeDef MPU6050_InitInterrupts(MPU6050_t *mpu, INT_ENABLE_t *interrupt
  * @param samples Number of samples to use for calibration
  * @return HAL status
  */
-HAL_StatusTypeDef MPU6050_Calibrate(MPU6050_t *mpu, uint16_t samples);
+HAL_StatusTypeDef MPU6050_Calibrate(MPU6050_t *mpu, volatile uint8_t *is_ready, uint16_t samples);
 
 uint8_t MPU6050_DataReady(void);
 

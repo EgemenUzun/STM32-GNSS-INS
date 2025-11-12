@@ -8,7 +8,7 @@
 #include "mpu6050.h"
 #include <stdio.h>
 
-HAL_StatusTypeDef MPU6050_Init(MPU6050_t *mpu, I2C_HandleTypeDef *hi2c, uint8_t address, INT_ENABLE_t *interrupts, INT_CONFIG_t *interrupt_config) {
+HAL_StatusTypeDef MPU6050_Init(MPU6050_t *mpu, I2C_HandleTypeDef *hi2c, uint8_t address, INT_ENABLE_t *interrupts, INT_CONFIG_t *interrupt_config, volatile uint8_t *is_ready) {
 	uint8_t check, data;
 	mpu->hi2c = hi2c;
 	mpu->address = address;
@@ -86,7 +86,7 @@ HAL_StatusTypeDef MPU6050_Init(MPU6050_t *mpu, I2C_HandleTypeDef *hi2c, uint8_t 
 	printf("MPU6050 interrupt config and enable register is updated\n");
 
 	// Calibrate Gyroscope
-	if (MPU6050_Calibrate(mpu, 2000) != HAL_OK) {
+	if (MPU6050_Calibrate(mpu, is_ready, 2000) != HAL_OK) {
 		printf("Calibration is failed\n");
 		return HAL_ERROR;
 	}
@@ -155,7 +155,7 @@ HAL_StatusTypeDef MPU6050_SetSampleRateDivider(MPU6050_t *mpu, uint8_t divider) 
 
 HAL_StatusTypeDef MPU6050_SetUserControl(MPU6050_t *mpu, bool enable_buffer, FIFO_SELECTION_t *fifo_selection) {
 	uint8_t fifo_en_data = enable_buffer ? 0x40 : 0x00;
-	if (HAL_I2C_Mem_Write(mpu->hi2c, mpu->address, MPU6050_REG_USER_CTRL, 1, &fifo_en_data) != HAL_OK) {
+	if (HAL_I2C_Mem_Write(mpu->hi2c, mpu->address, MPU6050_REG_USER_CTRL, 1, &fifo_en_data, 1, HAL_MAX_DELAY) != HAL_OK) {
 		printf("User control register couldn't set\n");
 		return HAL_ERROR;
 	}
@@ -165,7 +165,7 @@ HAL_StatusTypeDef MPU6050_SetUserControl(MPU6050_t *mpu, bool enable_buffer, FIF
 	buffer_selection_data |=  fifo_selection->zg_fifo_en ? 0x01 << 4 : 0x00;
 	buffer_selection_data |=  fifo_selection->accel_fifo_en ? 0x01 << 3 : 0x00;
 
-	return HAL_I2C_Mem_Write(mpu->hi2c, mpu->address, MPU6050_REG_USER_CTRL, 1, &buffer_selection_data);
+	return HAL_I2C_Mem_Write(mpu->hi2c, mpu->address, MPU6050_REG_USER_CTRL, 1, &buffer_selection_data, 1, HAL_MAX_DELAY);
 }
 
 HAL_StatusTypeDef MPU6050_ReadAccelerometer(MPU6050_t *mpu) {
@@ -210,7 +210,7 @@ HAL_StatusTypeDef MPU6050_ReadTemperature(MPU6050_t *mpu) {
 
 HAL_StatusTypeDef MPU6050_ReadAllData(MPU6050_t *mpu) {
 	uint8_t data[14];
-	auto response = HAL_I2C_Mem_Read(mpu->hi2c, mpu->address, MPU6050_REG_ACCEL_XOUT_H, 1, data, 14, HAL_MAX_DELAY);
+	HAL_StatusTypeDef response = HAL_I2C_Mem_Read(mpu->hi2c, mpu->address, MPU6050_REG_ACCEL_XOUT_H, 1, data, 14, HAL_MAX_DELAY);
 	if (response != HAL_OK) {
 		printf("Couldn't read all data: %d\n", response);
 		return HAL_ERROR;
@@ -231,21 +231,23 @@ HAL_StatusTypeDef MPU6050_ReadAllData(MPU6050_t *mpu) {
 	return HAL_OK;
 }
 
-HAL_StatusTypeDef MPU6050_Calibrate(MPU6050_t *mpu, uint16_t samples) {
+HAL_StatusTypeDef MPU6050_Calibrate(MPU6050_t *mpu, volatile uint8_t *is_ready, uint16_t samples) {
 	// Recommended sample is 2000
 	int64_t accel_offset[3] = {0}, gyro_offset[3] = {0};
-	for (uint16_t i = 0; i < samples; i++) {
-		if (MPU6050_ReadAllData(mpu) != HAL_OK) {
-			printf("Sample count: %d \n", i);
-			return HAL_ERROR;
+	uint16_t i = 0;
+	while (i < samples) {
+		if (*is_ready) {
+			*is_ready = 0;
+			if (MPU6050_ReadAllData(mpu) == HAL_OK) {
+				printf("Offsets read: %d\n", i);
+				for (uint8_t j = 0; j < 3; j++) {
+					accel_offset[j] += mpu->accel_raw[j];
+					gyro_offset[j] += mpu->gyro_raw[j];
+				}
+				i++;
+				HAL_Delay(10);
+			}
 		}
-
-
-		for (uint8_t j = 0; j < 3; j++) {
-			accel_offset[j] += mpu->accel_raw[j];
-			gyro_offset[j] += mpu->gyro_raw[j];
-		}
-		HAL_Delay(100);
 	}
 
 	for (uint8_t j = 0; j < 3; j++) {
@@ -253,12 +255,12 @@ HAL_StatusTypeDef MPU6050_Calibrate(MPU6050_t *mpu, uint16_t samples) {
 		mpu->gyro_offset[j] = gyro_offset[j] / samples;
 	}
 	printf("---Offsets---\n");
-	printf("GYROX: %llu\n",gyro_offset[0]);
-	printf("GYROY: %llu\n", gyro_offset[1]);
-	printf("GYROZ: %llu\n", gyro_offset[2]);
-	printf("ACCX: %llu\n", accel_offset[0]);
-	printf("ACCY: %llu\n", accel_offset[1]);
-	printf("ACCZ: %llu\n", accel_offset[2]);
+	printf("GYROX: %d\n", mpu->gyro_offset[0]);
+	printf("GYROY: %d\n", mpu->gyro_offset[1]);
+	printf("GYROZ: %d\n", mpu->gyro_offset[2]);
+	printf("ACCX: %d\n", mpu->accel_offset[0]);
+	printf("ACCY: %d\n", mpu->accel_offset[1]);
+	printf("ACCZ: %d\n", mpu->accel_offset[2]);
 	return HAL_OK;
 }
 
