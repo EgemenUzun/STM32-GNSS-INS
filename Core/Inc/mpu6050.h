@@ -224,6 +224,13 @@ HAL_StatusTypeDef MPU6050_InitInterrupts(MPU6050_t *mpu, INT_ENABLE_t *interrupt
  */
 HAL_StatusTypeDef MPU6050_Calibrate(MPU6050_t *mpu, volatile uint8_t *is_ready, uint16_t samples);
 
+/**
+ * @brief Clear interrupt pin for MPU6050
+ * @param mpu Pointer to MPU6050_t structure
+ * @return HAL status
+ */
+HAL_StatusTypeDef MPU6050_ClearInterrupt(MPU6050_t *mpu);
+
 uint8_t MPU6050_DataReady(void);
 
 

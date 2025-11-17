@@ -239,6 +239,7 @@ HAL_StatusTypeDef MPU6050_Calibrate(MPU6050_t *mpu, volatile uint8_t *is_ready, 
 		if (*is_ready) {
 			*is_ready = 0;
 			if (MPU6050_ReadAllData(mpu) == HAL_OK) {
+				MPU6050_ClearInterrupt(mpu);
 				printf("Offsets read: %d\n", i);
 				for (uint8_t j = 0; j < 3; j++) {
 					accel_offset[j] += mpu->accel_raw[j];
@@ -295,6 +296,11 @@ HAL_StatusTypeDef MPU6050_InitInterrupts(MPU6050_t *mpu, INT_ENABLE_t *interrupt
 	if (HAL_I2C_Mem_Write(mpu->hi2c, mpu->address, MPU6050_REG_INT_ENABLE, 1, &enable_interrups, 1, HAL_MAX_DELAY) != HAL_OK)
 		return HAL_ERROR;
 	return HAL_OK;
+}
+
+HAL_StatusTypeDef MPU6050_ClearInterrupt(MPU6050_t *mpu) {
+    uint8_t int_status;
+    return HAL_I2C_Mem_Read(mpu->hi2c, mpu->address, MPU6050_REG_INT_STATUS, 1, &int_status, 1, HAL_MAX_DELAY);
 }
 
 uint8_t MPU6050_DataReady(void) {
