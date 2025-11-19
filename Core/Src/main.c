@@ -141,10 +141,7 @@ int main(void)
 				mpu6050.accel[2] = (float)(mpu6050.accel_raw[2] - mpu6050.accel_offset[2]) / mpu6050.accel_sensitivity;
 
 				Calculate_Euler_Angles(&mpu6050, HAL_GetTick());
-				printf("gyro x: %f, gyro y: %f, gyro z: %f, accel x: %f, accel y: %f, accel z: %f, filtered_gyro x: %f, filtered_gyro y: %f, filtered_gyro z: %f\n",
-						mpu6050.gyro_angel[0], mpu6050.gyro_angel[1], mpu6050.gyro_angel[2], mpu6050.accel[0],  mpu6050.accel[1],  mpu6050.accel[2], mpu6050.gyro_angel_f[0], mpu6050.gyro_angel_f[1], mpu6050.gyro_angel_f[2]);
         MPU6050_ClearInterrupt(&mpu6050);
-				HAL_Delay(20);
 			}
 		}
     /* USER CODE END WHILE */

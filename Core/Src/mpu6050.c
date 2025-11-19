@@ -46,7 +46,7 @@ HAL_StatusTypeDef MPU6050_Init(MPU6050_t *mpu, I2C_HandleTypeDef *hi2c, uint8_t 
 	printf("MPU6050 is wake up\n");
 	HAL_Delay(50);
 
-	data = 0x04; // Update sample rate as 200HZ
+	data = 0x09; // Update sample rate as 200HZ
 	if(MPU6050_SetSampleRateDivider(mpu, data) != HAL_OK) {
 		printf("MPU6050 sample rate couldn't update\n");
 		return HAL_ERROR;
@@ -71,7 +71,7 @@ HAL_StatusTypeDef MPU6050_Init(MPU6050_t *mpu, I2C_HandleTypeDef *hi2c, uint8_t 
 	HAL_Delay(50);
 
 	// Set Digital Low Pass Filter configuration
-	if (MPU6050_SetDLPFBandwidth(mpu, MPU6050_DLPF_BW_260_HZ) != HAL_OK) {
+	if (MPU6050_SetDLPFBandwidth(mpu, MPU6050_DLPF_BW_44_HZ) != HAL_OK) {
 		printf("MPU6050 digital low pass filter register is couldn't update\n");
 		return HAL_ERROR;
 	}
@@ -165,7 +165,7 @@ HAL_StatusTypeDef MPU6050_SetUserControl(MPU6050_t *mpu, bool enable_buffer, FIF
 	buffer_selection_data |=  fifo_selection->zg_fifo_en ? 0x01 << 4 : 0x00;
 	buffer_selection_data |=  fifo_selection->accel_fifo_en ? 0x01 << 3 : 0x00;
 
-	return HAL_I2C_Mem_Write(mpu->hi2c, mpu->address, MPU6050_REG_USER_CTRL, 1, &buffer_selection_data, 1, HAL_MAX_DELAY);
+	return HAL_I2C_Mem_Write(mpu->hi2c, mpu->address, MPU6050_REG_FIFO_EN, 1, &buffer_selection_data, 1, HAL_MAX_DELAY);
 }
 
 HAL_StatusTypeDef MPU6050_ReadAccelerometer(MPU6050_t *mpu) {
@@ -246,15 +246,18 @@ HAL_StatusTypeDef MPU6050_Calibrate(MPU6050_t *mpu, volatile uint8_t *is_ready, 
 					gyro_offset[j] += mpu->gyro_raw[j];
 				}
 				i++;
-				HAL_Delay(10);
 			}
 		}
 	}
 
-	for (uint8_t j = 0; j < 3; j++) {
-		mpu->accel_offset[j] = accel_offset[j] / samples;
-		mpu->gyro_offset[j] = gyro_offset[j] / samples;
-	}
+	mpu->gyro_offset[0] = gyro_offset[0] / samples;
+    mpu->gyro_offset[1] = gyro_offset[1] / samples;
+    mpu->gyro_offset[2] = gyro_offset[2] / samples;
+    
+    mpu->accel_offset[0] = accel_offset[0] / samples;
+    mpu->accel_offset[1] = accel_offset[1] / samples;
+    mpu->accel_offset[2] = (accel_offset[2] / samples) - (int16_t)mpu->accel_sensitivity;
+
 	printf("---Offsets---\n");
 	printf("GYROX: %d\n", mpu->gyro_offset[0]);
 	printf("GYROY: %d\n", mpu->gyro_offset[1]);
