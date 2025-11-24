@@ -31,6 +31,7 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/mpu6050.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/complementary_filter.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/nmea_parser.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/hmc5883l.c
 )
 
 # STM32 HAL/LL Drivers

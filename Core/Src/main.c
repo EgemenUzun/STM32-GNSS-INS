@@ -24,6 +24,7 @@
 #include "mpu6050.h"
 #include "complementary_filter.h"
 #include "nmea_parser.h"
+#include "hmc5883l.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stm32h7xx_hal_uart.h>
@@ -74,6 +75,7 @@ INT_CONFIG_t interrupt_config = {0};
 
 /* HMC5883L Variables */
 volatile uint8_t compass_data_ready = 0;
+HMC5883L_t compass = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -138,6 +140,12 @@ int main(void)
   	printf("MPU6050 couldn't initialize\n");
   }
 
+  if(HMC5883L_Init(&compass, &hi2c1)  == HAL_OK) {
+    printf("HMC5883L successfully initialize\n");
+  } else {
+  	printf("HMC5883L couldn't initialize\n");
+  }
+
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN BSP */
@@ -163,6 +171,13 @@ int main(void)
         MPU6050_ClearInterrupt(&mpu6050);
 			}
 		}
+
+    if (compass_data_ready) {
+      compass_data_ready = 0;
+      if (HMC5883L_ReadRaw(&compass) == HAL_OK) {
+        HMC5883L_CalculateHeading(&compass);
+      }
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

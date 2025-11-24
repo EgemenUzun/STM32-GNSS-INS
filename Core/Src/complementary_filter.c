@@ -14,7 +14,7 @@ uint32_t timer = 0;
 float acc_roll = 0, acc_pitch = 0;
 float gyro_roll = 0, gyro_pitch = 0, gyro_yaw = 0;
 static float alpha = 0.98f;
-double dt = 1/200;
+double dt = 0;
 
 void Calculate_Euler_Angles(MPU6050_t *mpu6050, uint32_t tick) {
 	if (timer == 0) {
@@ -41,4 +41,25 @@ void Calculate_Euler_Angles(MPU6050_t *mpu6050, uint32_t tick) {
 						mpu6050->accel[0],  mpu6050->accel[1],  mpu6050->accel[2], 
 						mpu6050->gyro_angel_f[0], mpu6050->gyro_angel_f[1], mpu6050->gyro_angel_f[2],
 						acc_roll, acc_pitch);
+}
+
+void HMC5883L_CalculateHeading(HMC5883L_t *hmc) {
+
+    float x = (float)hmc->x;
+    float y = (float)hmc->y;
+
+    float heading = atan2(y, x);
+
+    // İstanbul manyetik sapma ~ +4.43°
+    heading += 4.43 * (M_PI / 180.0);
+
+    // normalization
+    if (heading < 0)
+        heading += 2 * M_PI;
+    if (heading > 2 * M_PI)
+        heading -= 2 * M_PI;
+
+    hmc->HeadingDegrees = heading * 180.0 / M_PI;
+
+    printf("Heading: %.2f°\n", hmc->HeadingDegrees);
 }
