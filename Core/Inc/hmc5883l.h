@@ -19,10 +19,15 @@
 
 typedef struct {
     I2C_HandleTypeDef* hi2c;
+    
     int16_t x;
     int16_t y;
     int16_t z;
-    float HeadingDegrees;
+
+    float heading_deg;
+
+    float offset[3];   // Hard iron offset
+    float scale[3];    // Soft iron scale
 } HMC5883L_t;
 
 typedef enum {
@@ -66,8 +71,8 @@ typedef enum {
     HMC5883L_IDLE_2 = 3,
 } OPERATING_MODE; // 0th, 1st bits
 
-HAL_StatusTypeDef HMC5883L_Init(HMC5883L_t *hmc, I2C_HandleTypeDef *hi2c);
+HAL_StatusTypeDef HMC5883L_Init(HMC5883L_t *hmc, I2C_HandleTypeDef *hi2c, volatile uint8_t *is_ready);
 HAL_StatusTypeDef HMC5883L_ReadRaw(HMC5883L_t *hmc);
-void HMC5883L_CalculateHeading(HMC5883L_t *hmc);
+void HMC5883L_Calibration_Update(HMC5883L_t *hmc, uint16_t sample, volatile uint8_t *is_ready);
 
 #endif // HMC5883L_H

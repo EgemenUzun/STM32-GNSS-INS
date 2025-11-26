@@ -10,7 +10,7 @@
 #include "mpu6050.h"
 #include "hmc5883l.h"
 
-void Calculate_Euler_Angles(MPU6050_t *mpu6050, uint32_t tick);
+void Calculate_Euler_Angles(MPU6050_t *mpu6050, uint32_t tick, HMC5883L_t *hmc);
 void HMC5883L_CalculateHeading(HMC5883L_t *hmc);
 
 #endif /* INC_COMPLEMENTARY_FILTER_H_ */

@@ -48,7 +48,20 @@ void HMC5883L_CalculateHeading(HMC5883L_t *hmc) {
     float x = (float)hmc->x;
     float y = (float)hmc->y;
 
-    float heading = atan2(y, x);
+    // ---------- APPLY HARD IRON CORRECTION ----------
+    mx -= hmc->offset[0];
+    my -= hmc->offset[1];
+    mz -= hmc->offset[2];
+
+    // ---------- APPLY SOFT IRON SCALING ----------
+    mx *= hmc->scale[0];
+    my *= hmc->scale[1];
+    mz *= hmc->scale[2];
+
+	// Calibration formula is -> CalculatedAxis = scale * (rawAxis - offset(bias))
+
+    // ---------- 2D HEADING Calculation ----------
+    float heading = atan2(my, mx);
 
     // İstanbul manyetik sapma ~ +4.43°
     heading += 4.43 * (M_PI / 180.0);

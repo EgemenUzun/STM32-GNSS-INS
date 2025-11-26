@@ -159,15 +159,7 @@ int main(void)
 		if (mpu_data_ready) {
 			mpu_data_ready = 0;
 			if(MPU6050_ReadAllData(&mpu6050) == HAL_OK) {
-				mpu6050.gyro[0] = (float)(mpu6050.gyro_raw[0] - mpu6050.gyro_offset[0]) / mpu6050.gyro_sensitivity;
-				mpu6050.gyro[1] = (float)(mpu6050.gyro_raw[1] - mpu6050.gyro_offset[1]) / mpu6050.gyro_sensitivity;
-				mpu6050.gyro[2] = (float)(mpu6050.gyro_raw[2] - mpu6050.gyro_offset[2]) / mpu6050.gyro_sensitivity;
-
-				mpu6050.accel[0] = (float)(mpu6050.accel_raw[0] - mpu6050.accel_offset[0]) / mpu6050.accel_sensitivity;
-				mpu6050.accel[1] = (float)(mpu6050.accel_raw[1] - mpu6050.accel_offset[1]) / mpu6050.accel_sensitivity;
-				mpu6050.accel[2] = (float)(mpu6050.accel_raw[2] - mpu6050.accel_offset[2]) / mpu6050.accel_sensitivity;
-
-				Calculate_Euler_Angles(&mpu6050, HAL_GetTick());
+				Calculate_Euler_Angles(&mpu6050, HAL_GetTick(), &compass);
         MPU6050_ClearInterrupt(&mpu6050);
 			}
 		}
