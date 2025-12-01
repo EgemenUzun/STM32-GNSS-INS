@@ -40,6 +40,10 @@ void Calculate_Euler_Angles(MPU6050_t *mpu6050, uint32_t tick, HMC5883L_t *hmc) 
 	mpu6050->gyro_angel[0] += mpu6050->gyro[0] * dt;
 	mpu6050->gyro_angel[1] += mpu6050->gyro[1] * dt;
 	mpu6050->gyro_angel[2] += mpu6050->gyro[2] * dt;
+	mpu6050->gyro_angel[2] = fmod(mpu6050->gyro_angel[2], 360.0f);
+	if (mpu6050->gyro_angel[2] < 0) {
+    	mpu6050->gyro_angel[2] += 360.0f;
+	}
 	HMC5883L_CalculateHeading(hmc);
 
 	mpu6050->gyro_angel_f[0] = alpha * (mpu6050->gyro_angel_f[0] + mpu6050->gyro[0] * dt) + (1.0f - alpha) * acc_roll;
