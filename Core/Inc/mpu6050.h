@@ -231,6 +231,41 @@ HAL_StatusTypeDef MPU6050_Calibrate(MPU6050_t *mpu, volatile uint8_t *is_ready, 
  */
 HAL_StatusTypeDef MPU6050_ClearInterrupt(MPU6050_t *mpu);
 
+
+/**
+ * @brief Sets the calibration offsets for the MPU6050 sensor.
+ * 
+ * @details This function configures the gyroscope and accelerometer offset values
+ * to compensate for sensor bias and improve measurement accuracy. The offsets are
+ * applied to the raw sensor readings during data acquisition.
+ * 
+ * @param[in,out] mpu Pointer to the MPU6050_t structure containing the device configuration.
+ * @param[in] gyro_x Gyroscope X-axis offset value (LSB per degree/second).
+ * @param[in] gyro_y Gyroscope Y-axis offset value (LSB per degree/second).
+ * @param[in] gyro_z Gyroscope Z-axis offset value (LSB per degree/second).
+ * @param[in] accel_x Accelerometer X-axis offset value (LSB per g).
+ * @param[in] accel_y Accelerometer Y-axis offset value (LSB per g).
+ * @param[in] accel_z Accelerometer Z-axis offset value (LSB per g).
+ * 
+ * @return N/A
+ * 
+ * @note Offsets should be calibrated by measuring sensor values in a stable
+ * environment and adjusting values to compensate for bias.
+ */
+void MPU6050_SetOffsets(MPU6050_t *mpu, int16_t gyro_x, int16_t gyro_y, int16_t gyro_z, int16_t accel_x, int16_t accel_y, int16_t accel_z);
+
+/**
+ * @brief Checks if new data is ready from the MPU6050 sensor.
+ * 
+ * This function reads the data ready status flag from the MPU6050 interrupt status register.
+ * It determines whether new sensor data (accelerometer, gyroscope, or temperature) is available
+ * for reading.
+ * 
+ * @return uint8_t Returns 1 if new data is ready, 0 otherwise.
+ * 
+ * @note This function should be called before reading sensor data to ensure valid measurements.
+ * @note The data ready flag is automatically cleared when sensor data registers are read.
+ */
 uint8_t MPU6050_DataReady(void);
 
 
