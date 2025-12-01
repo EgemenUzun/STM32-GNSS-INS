@@ -85,5 +85,5 @@ void HMC5883L_CalculateHeading(HMC5883L_t *hmc)
 
     hmc->heading_deg = heading * RAD_TO_DEG;
 
-    printf("Heading: %2f° (calibrated)\n", hmc->heading_deg);
+    printf("Heading: %2f\n", hmc->heading_deg);
 }

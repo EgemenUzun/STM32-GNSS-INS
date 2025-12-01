@@ -140,8 +140,10 @@ int main(void)
   	printf("MPU6050 couldn't initialize\n");
   }
 
-  if(HMC5883L_Init(&compass, &hi2c1)  == HAL_OK) {
+  if(HMC5883L_Init(&compass, &hi2c1) == HAL_OK) {
     printf("HMC5883L successfully initialize\n");
+    HMC5883L_Find_Min_Max(&compass, &compass_data_ready);
+    HMC5883L_Calculate_Offsets_And_Scales(&compass);
   } else {
   	printf("HMC5883L couldn't initialize\n");
   }

@@ -1,9 +1,10 @@
 #include "hmc5883l.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include "stm32h7xx_hal.h"
 
-HAL_StatusTypeDef HMC5883L_Init(HMC5883L_t *hmc, I2C_HandleTypeDef *hi2c,
-                                volatile uint8_t *is_ready) {
+HAL_StatusTypeDef HMC5883L_Init(HMC5883L_t *hmc, I2C_HandleTypeDef *hi2c) {
   hmc->hi2c = hi2c;
   uint8_t data;
 
@@ -32,7 +33,6 @@ HAL_StatusTypeDef HMC5883L_Init(HMC5883L_t *hmc, I2C_HandleTypeDef *hi2c,
     return HAL_ERROR;
   }
 
-  HMC5883L_Calibration_Update(hmc, 200, is_ready);
   return HAL_OK;
 }
 
@@ -49,42 +49,82 @@ HAL_StatusTypeDef HMC5883L_ReadRaw(HMC5883L_t *hmc) {
   return HAL_OK;
 }
 
-void HMC5883L_Calibration_Update(HMC5883L_t *hmc, uint16_t sample,
-                                 volatile uint8_t *is_ready) {
-  float minX = 99999, minY = 99999, minZ = 99999;
-  float maxX = -99999, maxY = -99999, maxZ = -99999;
-  uint16_t i = 0;
-  while (i < sample) {
+void HMC5883L_Find_Min_Max(HMC5883L_t *hmc, volatile uint8_t *is_ready) {
+  printf("---Compass Calibration Start---\n");
+  int minX = 32767, minY = 32767, minZ = 32767;
+  int maxX = -32768, maxY = -32768, maxZ = -32768;
+  bool changed = false;
+  bool done = false;
+  unsigned int t = 0;
+  unsigned int c = HAL_GetTick();
+
+  while (!done) {
     if (*is_ready) {
       *is_ready = 0;
       if (HMC5883L_ReadRaw(hmc) == HAL_OK) {
-        printf("Sample read: %d\n", i);
-        if (hmc->x < minX)
+        changed = false;
+        if (hmc->x < minX) {
           minX = hmc->x;
-        if (hmc->y < minY)
+          changed = true;
+        }
+        if (hmc->y < minY) {
           minY = hmc->y;
-        if (hmc->z < minZ)
+          changed = true;
+        }
+        if (hmc->z < minZ) {
           minZ = hmc->z;
+          changed = true;
+        }
 
-        if (hmc->x > maxX)
+        if (hmc->x > maxX) {
           maxX = hmc->x;
-        if (hmc->y > maxY)
+          changed = true;
+        }
+        if (hmc->y > maxY) {
           maxY = hmc->y;
-        if (hmc->z > maxZ)
+          changed = true;
+        }
+        if (hmc->z > maxZ) {
           maxZ = hmc->z;
+          changed = true;
+        }
+
+        if(changed && !done){
+          c = HAL_GetTick();
+        }
+        t = HAL_GetTick();
+        
+        if ((t - c > 10000) && !done) {
+          done = true;
+          	printf("---Compass Calibration Values---\n");
+            printf("Max X: %d\n", maxX);
+            printf("Min X: %d\n", minX);
+            printf("Max Y: %d\n", maxY);
+            printf("Min Y: %d\n", minY);
+            printf("Max Z: %d\n", maxZ);
+            printf("Min Z: %d\n", minZ);
+        }
       }
-      i++;
     }
+
+    hmc->max_x = maxX;
+    hmc->min_x = minX;
+    hmc->max_y = maxY;
+    hmc->min_y = minY;
+    hmc->max_z = maxZ;
+    hmc->min_z = minZ;
   }
+}
 
+void HMC5883L_Calculate_Offsets_And_Scales(HMC5883L_t *hmc) {
   // HARD IRON offset
-  hmc->offset[0] = (maxX + minX) / 2.0f;
-  hmc->offset[1] = (maxY + minY) / 2.0f;
-  hmc->offset[2] = (maxZ + minZ) / 2.0f;
+  hmc->offset[0] = (hmc->max_x + hmc->min_x) / 2.0f;
+  hmc->offset[1] = (hmc->max_y + hmc->min_y) / 2.0f;
+  hmc->offset[2] = (hmc->max_z + hmc->min_z) / 2.0f;
 
-  float rangeX = maxX - minX;
-  float rangeY = maxY - minY;
-  float rangeZ = maxZ - minZ;
+  float rangeX = hmc->max_x - hmc->min_x;
+  float rangeY = hmc->max_y - hmc->min_y;
+  float rangeZ = hmc->max_z - hmc->min_z;
 
   float avgRange = (rangeX + rangeY + rangeZ) / 3.0f;
 
@@ -92,4 +132,14 @@ void HMC5883L_Calibration_Update(HMC5883L_t *hmc, uint16_t sample,
   hmc->scale[0] = avgRange / rangeX;
   hmc->scale[1] = avgRange / rangeY;
   hmc->scale[2] = avgRange / rangeZ;
+  printf("---Compass offsets and scales are defined---\n");
+}
+
+void HMC5883L_Set_Min_Max(HMC5883L_t *hmc, int maxX, int minX, int maxY, int minY, int maxZ, int minZ) {
+    hmc->max_x = maxX;
+    hmc->min_x = minX;
+    hmc->max_y = maxY;
+    hmc->min_y = minY;
+    hmc->max_z = maxZ;
+    hmc->min_z = minZ;
 }

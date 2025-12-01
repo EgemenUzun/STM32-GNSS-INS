@@ -24,6 +24,13 @@ typedef struct {
     int16_t y;
     int16_t z;
 
+    int max_x;
+    int min_x;
+    int max_y;
+    int min_y;
+    int max_z;
+    int min_z;
+
     float heading_deg;
 
     float offset[3];   // Hard iron offset
@@ -71,8 +78,10 @@ typedef enum {
     HMC5883L_IDLE_2 = 3,
 } OPERATING_MODE; // 0th, 1st bits
 
-HAL_StatusTypeDef HMC5883L_Init(HMC5883L_t *hmc, I2C_HandleTypeDef *hi2c, volatile uint8_t *is_ready);
+HAL_StatusTypeDef HMC5883L_Init(HMC5883L_t *hmc, I2C_HandleTypeDef *hi2c);
 HAL_StatusTypeDef HMC5883L_ReadRaw(HMC5883L_t *hmc);
-void HMC5883L_Calibration_Update(HMC5883L_t *hmc, uint16_t sample, volatile uint8_t *is_ready);
+void HMC5883L_Find_Min_Max(HMC5883L_t *hmc, volatile uint8_t *is_ready);
+void HMC5883L_Calculate_Offsets_And_Scales(HMC5883L_t *hmc);
+void HMC5883L_Set_Min_Max(HMC5883L_t *hmc, int maxX, int minX, int maxY, int minY, int maxZ, int minZ);
 
 #endif // HMC5883L_H
