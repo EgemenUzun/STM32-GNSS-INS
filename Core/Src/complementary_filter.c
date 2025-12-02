@@ -25,8 +25,8 @@ void Calculate_Euler_Angles(MPU6050_t *mpu6050, uint32_t tick, HMC5883L_t *hmc) 
 	}
 	timer = tick;
 	// y axis is pitch and x is roll
-	acc_roll = atan2(mpu6050->accel[1], sqrt(mpu6050->accel[0]*mpu6050->accel[0] + mpu6050->accel[2]*mpu6050->accel[2])) * RAD_TO_DEG;
-    acc_pitch = atan2(-mpu6050->accel[0], sqrt(mpu6050->accel[1]*mpu6050->accel[1] + mpu6050->accel[2]*mpu6050->accel[2])) * RAD_TO_DEG;
+	acc_pitch = atan2(mpu6050->accel[1], mpu6050->accel[2]) * RAD_TO_DEG;
+    acc_roll = atan2(-mpu6050->accel[0], mpu6050->accel[2]) * RAD_TO_DEG;
 	printf("dt: %f\n", dt);
 
 	mpu6050->gyro[0] = (float)(mpu6050->gyro_raw[0] - mpu6050->gyro_offset[0]) / mpu6050->gyro_sensitivity;
@@ -46,8 +46,8 @@ void Calculate_Euler_Angles(MPU6050_t *mpu6050, uint32_t tick, HMC5883L_t *hmc) 
 	}
 	HMC5883L_CalculateHeading(hmc);
 
-	mpu6050->gyro_angel_f[0] = alpha * (mpu6050->gyro_angel_f[0] + mpu6050->gyro[0] * dt) + (1.0f - alpha) * acc_roll;
-    mpu6050->gyro_angel_f[1] = alpha * (mpu6050->gyro_angel_f[1] + mpu6050->gyro[1] * dt) + (1.0f - alpha) * acc_pitch;
+    mpu6050->gyro_angel_f[0] = alpha * (mpu6050->gyro_angel_f[0] + mpu6050->gyro[0] * dt) + (1.0f - alpha) * acc_pitch;
+	mpu6050->gyro_angel_f[1] = alpha * (mpu6050->gyro_angel_f[1] + mpu6050->gyro[1] * dt) + (1.0f - alpha) * acc_roll;
     mpu6050->gyro_angel_f[2] = alpha_heading * (mpu6050->gyro_angel_f[2] + mpu6050->gyro[2] * dt) + (1.0f - alpha_heading) * hmc->heading_deg;
 
 	printf("gyro x: %f, gyro y: %f, gyro z: %f, accel x: %f, accel y: %f, accel z: %f, filtered_gyro x: %f, filtered_gyro y: %f, filtered_gyro z: %f, accel roll: %f, accel pitch: %f\n",

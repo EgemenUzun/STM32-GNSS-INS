@@ -256,7 +256,7 @@ HAL_StatusTypeDef MPU6050_Calibrate(MPU6050_t *mpu, volatile uint8_t *is_ready, 
     
     mpu->accel_offset[0] = accel_offset[0] / samples;
     mpu->accel_offset[1] = accel_offset[1] / samples;
-    mpu->accel_offset[2] = (accel_offset[2] / samples) - (int16_t)mpu->accel_sensitivity;
+    mpu->accel_offset[2] = accel_offset[2] / samples;
 
 	printf("---Offsets---\n");
 	printf("GYROX: %d\n", mpu->gyro_offset[0]);
@@ -308,4 +308,14 @@ HAL_StatusTypeDef MPU6050_ClearInterrupt(MPU6050_t *mpu) {
 
 uint8_t MPU6050_DataReady(void) {
 	return HAL_GPIO_ReadPin(MPU6050_INT_PORT, MPU6050_INT_PIN);
+}
+
+void MPU6050_SetOffsets(MPU6050_t *mpu, int16_t gyro_x, int16_t gyro_y, int16_t gyro_z, int16_t accel_x, int16_t accel_y, int16_t accel_z) {
+	mpu->gyro_offset[0] = gyro_x;
+    mpu->gyro_offset[1] = gyro_y;
+    mpu->gyro_offset[2] = gyro_z;
+    
+    mpu->accel_offset[0] = accel_x;
+    mpu->accel_offset[1] = accel_y;
+    mpu->accel_offset[2] = accel_z;
 }
