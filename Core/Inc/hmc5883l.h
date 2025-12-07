@@ -78,7 +78,7 @@ typedef enum {
     HMC5883L_IDLE_2 = 3,
 } OPERATING_MODE; // 0th, 1st bits
 
-HAL_StatusTypeDef HMC5883L_Init(HMC5883L_t *hmc, I2C_HandleTypeDef *hi2c);
+HAL_StatusTypeDef HMC5883L_Init(HMC5883L_t *hmc, I2C_HandleTypeDef *hi2c, volatile uint8_t *is_ready);
 HAL_StatusTypeDef HMC5883L_ReadRaw(HMC5883L_t *hmc);
 void HMC5883L_Find_Min_Max(HMC5883L_t *hmc, volatile uint8_t *is_ready);
 void HMC5883L_Calculate_Offsets_And_Scales(HMC5883L_t *hmc);

@@ -86,10 +86,11 @@ HAL_StatusTypeDef MPU6050_Init(MPU6050_t *mpu, I2C_HandleTypeDef *hi2c, uint8_t 
 	printf("MPU6050 interrupt config and enable register is updated\n");
 
 	// Calibrate Gyroscope
-	if (MPU6050_Calibrate(mpu, is_ready, 2000) != HAL_OK) {
-		printf("Calibration is failed\n");
-		return HAL_ERROR;
-	}
+	// if (MPU6050_Calibrate(mpu, is_ready, 2000) != HAL_OK) {
+	// 	printf("Calibration is failed\n");
+	// 	return HAL_ERROR;
+	// }
+	MPU6050_SetOffsets(mpu, -51, 386, -149, 160, 498, 1872);
 	printf("Calibration is finished\n");
 	return HAL_OK;
 }
@@ -256,15 +257,12 @@ HAL_StatusTypeDef MPU6050_Calibrate(MPU6050_t *mpu, volatile uint8_t *is_ready, 
     
     mpu->accel_offset[0] = accel_offset[0] / samples;
     mpu->accel_offset[1] = accel_offset[1] / samples;
-    mpu->accel_offset[2] = accel_offset[2] / samples;
+    mpu->accel_offset[2] = (accel_offset[2] / samples) - (int16_t)mpu->accel_sensitivity;;
 
-	printf("---Offsets---\n");
-	printf("GYROX: %d\n", mpu->gyro_offset[0]);
-	printf("GYROY: %d\n", mpu->gyro_offset[1]);
-	printf("GYROZ: %d\n", mpu->gyro_offset[2]);
-	printf("ACCX: %d\n", mpu->accel_offset[0]);
-	printf("ACCY: %d\n", mpu->accel_offset[1]);
-	printf("ACCZ: %d\n", mpu->accel_offset[2]);
+	printf("---IMU Offsets---\n");
+	printf("GYROX | GYROY | GYROZ | ACCX | ACCY | ACCZ \n");
+	printf("%d, %d , %d, %d, %d, %d\n", mpu->gyro_offset[0], mpu->gyro_offset[1], mpu->gyro_offset[2],
+			mpu->accel_offset[0], mpu->accel_offset[1], mpu->accel_offset[2]);
 	return HAL_OK;
 }
 

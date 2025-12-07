@@ -143,10 +143,8 @@ int main(void)
   	printf("MPU6050 couldn't initialize\n");
   }
 
-  if(HMC5883L_Init(&compass, &hi2c2) == HAL_OK) {
+  if(HMC5883L_Init(&compass, &hi2c2, &compass_data_ready) == HAL_OK) {
     printf("HMC5883L successfully initialize\n");
-    HMC5883L_Find_Min_Max(&compass, &compass_data_ready);
-    HMC5883L_Calculate_Offsets_And_Scales(&compass);
   } else {
   	printf("HMC5883L couldn't initialize\n");
   }
@@ -164,7 +162,8 @@ int main(void)
 		if (mpu_data_ready) {
 			mpu_data_ready = 0;
 			if(MPU6050_ReadAllData(&mpu6050) == HAL_OK) {
-				Calculate_Euler_Angles(&mpu6050, HAL_GetTick(), &compass);
+				// Calculate_Euler_Angles(&mpu6050, HAL_GetTick(), &compass);
+        Calculate_AHRS(&mpu6050, &compass, HAL_GetTick());
         MPU6050_ClearInterrupt(&mpu6050);
 			}
 		}
@@ -172,7 +171,8 @@ int main(void)
     if (compass_data_ready) {
       compass_data_ready = 0;
       if (HMC5883L_ReadRaw(&compass) == HAL_OK) {
-        HMC5883L_CalculateHeading(&compass);
+        // HMC5883L_CalculateHeading(&compass);
+        Calculate_AHRS(&mpu6050, &compass, HAL_GetTick());
       }
     }
     /* USER CODE END WHILE */

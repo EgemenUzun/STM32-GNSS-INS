@@ -4,14 +4,13 @@
 #include <stdio.h>
 #include "stm32h7xx_hal.h"
 
-HAL_StatusTypeDef HMC5883L_Init(HMC5883L_t *hmc, I2C_HandleTypeDef *hi2c) {
+HAL_StatusTypeDef HMC5883L_Init(HMC5883L_t *hmc, I2C_HandleTypeDef *hi2c, volatile uint8_t *is_ready) {
   hmc->hi2c = hi2c;
   uint8_t data;
 
   // Step 1: Config A Register (0x00)
   // 8-average, 15 Hz default, normal measurement
-  data =
-      (HMC5883L_AVG_SMP_8 << 5) | (HMC5883L_15HZ << 2) | (HMC5883L_MSM_MODE_PN);
+  data = (HMC5883L_AVG_SMP_8 << 5) | (HMC5883L_15HZ << 2) | (HMC5883L_MSM_MODE_PN);
   if (HAL_I2C_Mem_Write(hmc->hi2c, HMC5883L_ADDR, HMC5883L_REG_CONFIG_A, 1,
                         &data, 1, HAL_MAX_DELAY) != HAL_OK) {
     return HAL_ERROR;
@@ -32,6 +31,10 @@ HAL_StatusTypeDef HMC5883L_Init(HMC5883L_t *hmc, I2C_HandleTypeDef *hi2c) {
                         1, HAL_MAX_DELAY) != HAL_OK) {
     return HAL_ERROR;
   }
+
+    // HMC5883L_Find_Min_Max(hmc, &is_ready);
+    HMC5883L_Set_Min_Max(hmc, 545, -187, 403, -438, 240, -456);
+    HMC5883L_Calculate_Offsets_And_Scales(hmc);
 
   return HAL_OK;
 }
@@ -66,27 +69,33 @@ void HMC5883L_Find_Min_Max(HMC5883L_t *hmc, volatile uint8_t *is_ready) {
         if (hmc->x < minX) {
           minX = hmc->x;
           changed = true;
+          printf("Min X: %d\n", minX);
         }
         if (hmc->y < minY) {
           minY = hmc->y;
           changed = true;
+          printf("Min Y: %d\n", minY);
         }
         if (hmc->z < minZ) {
           minZ = hmc->z;
           changed = true;
+          printf("Min Z: %d\n", minZ);
         }
 
         if (hmc->x > maxX) {
           maxX = hmc->x;
           changed = true;
+          printf("Max X: %d\n", maxX);
         }
         if (hmc->y > maxY) {
           maxY = hmc->y;
           changed = true;
+          printf("Max Y: %d\n", maxY);
         }
         if (hmc->z > maxZ) {
           maxZ = hmc->z;
           changed = true;
+          printf("Max Z: %d\n", maxZ);
         }
 
         if(changed && !done){
@@ -97,12 +106,8 @@ void HMC5883L_Find_Min_Max(HMC5883L_t *hmc, volatile uint8_t *is_ready) {
         if ((t - c > 10000) && !done) {
           done = true;
           	printf("---Compass Calibration Values---\n");
-            printf("Max X: %d\n", maxX);
-            printf("Min X: %d\n", minX);
-            printf("Max Y: %d\n", maxY);
-            printf("Min Y: %d\n", minY);
-            printf("Max Z: %d\n", maxZ);
-            printf("Min Z: %d\n", minZ);
+            printf("Max X | Min X | Max Z | Min Y | Max Z | Min Z \n");
+            printf("%d, %d , %d, %d, %d, %d\n", maxX, minX, maxY, minY, maxZ, minZ);
         }
       }
     }
